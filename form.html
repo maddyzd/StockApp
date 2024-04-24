@@ -1,0 +1,26 @@
+<html>
+ 
+<head>
+       <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+       <title>Assignment: Stock Ticker</title>
+</head>
+ 
+<body>
+       <h1>Stock Ticker</h1>
+       <form action="/process" method="get">
+               <label>
+                       <input type="radio" name="searchType" value="symbol" checked> Ticker Symbol
+                       <input type="radio" name="searchType" value="name"> Company Name
+               </label>
+               <br>
+               <label>
+                        Stock: 
+                       <input type="text" name="searchTerm" required>
+               </label>
+               <br>
+               <input type="submit" value="Search">
+       </form>
+ 
+</body>
+ 
+</html>
