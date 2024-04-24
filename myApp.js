@@ -1,96 +1,82 @@
+// Process the form and present the results online
 const http = require('http');
-const url = require('url');
-const qs = require('querystring');
+const fs = require('fs');
 const { MongoClient } = require('mongodb');
- 
-const port = 3000;
-const url_mongo = "mongodb+srv://mdumon:mydb123@cluster0.rvujnyd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
- 
-//create a MongoDB client
-const client = new MongoClient(url_mongo, {
-       useNewUrlParser: true,
-       useUnifiedTopology: true,
-});
- 
-//connect to MongoDB and start the server
-client.connect(function (err) {
-if (err) {
-       console.error('Error connecting to MongoDB:', err);
-       return;
-}
- 
-console.log('Connected to MongoDB');
- 
-//use database and collection
-const db = client.db('Stock');
-const collection = db.collection('PublicCompanies');
+const port = process.env.PORT || 3000;
 
-//create server
+// Load the html file to display form
 http.createServer(function (req, res) {
-       const reqUrl = url.parse(req.url, true);
-       
-       if (req.method === 'GET' && reqUrl.pathname === '/process') {
-               body = "";
- 
-               req.on('data', function (chunk) {
-                       body += chunk;
-               });
- 
-               req.on('end', async function () {
-               const formData = qs.parse(body);
-               const searchTerm = formData.searchTerm;
-               const searchType = formData.searchType;
- 
-               let query = {};
- 
-       if (searchType === 'symbol') {
-               query = { "ticker": searchTerm };
-       } else if (searchType === 'name') {
-               query = {"name": { $regex: new RegExp(escape(searchTerm), 'i') } };
-       }
-           try {
-               const companies = await collection.find(query).toArray();
-           
-               res.writeHead(200, {'Content-Type': 'text/html'});
-               res.write("<head> <meta charset='utf-8'><title>Search Results </title></head>");
-               res.write("<style> body {background-color: lightgreen; color: #354f52; text-align: center; font: Georgia; margin: auto;padding: auto;</style>");
-               res.write("<h1 style='font-weight:bold; font-size: 50px; text-align:center; margin-top: 3%'> Search Results </h1>");
-               res.write("<hr><br/>");
-           
-               if (companies.length > 0) {
-                   res.write("<h3 style='font-size: 20px; text-align:center; color: #e63946'>Results: " + companies.length + "</h3>");
-                   companies.forEach(function(stock) {
-                       res.write("<div style='display:flex; justify-content:center; align-items:center; flex-direction:column;'>");
-                       res.write("<p style='font-size: 16px; text-align: center;margin-top: 1%;'>Company: " + stock.company + ", Ticker: " + stock.ticker + ", Price: $" + stock.price + "</p>");
-                       res.write("</div>");
-                   });
-               } else {
-                   res.write("<h3 style='font-size: 20px; text-align:center; color: #e63946'>No results found</h3>");
-               }
-           
-               res.end();
-           } catch (error) {
-               console.error('Error searching for companies:', error);
-               res.writeHead(500, {'Content-Type': 'text/plain'});
-               res.end('Error searching for companies');
-           } finally {
-               client.close();
-           }
-       });
-       
-       } else {
-               //handle 404 Not Found
-               res.writeHead(404, { 'Content-Type': 'text/plain' });
-               res.end('Not Found');
-       }
-       }).listen(port, function () {
-               console.log('Server is running on http://localhost:' + port);
-       });
+    if (req.url === "/") {
+        fs.readFile('front.html', function(err, html) {
+            if (err) {
+                console.error("Error reading file:", err);
+                res.writeHead(500, {'Content-Type': 'text/plain'});
+                res.end("Error loading HTML file.");
+            } else {
+                res.writeHead(200, {'Content-Type': 'text/html'});
+                res.end(html);
+            } 
+        });
+    } else if (req.url.startsWith("/process") && req.method === "GET") {
+        const url = "mongodb+srv://mdumon:<password>@cluster0.rvujnyd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+        const client = new MongoClient(url, { useNewUrlParser: true, useUnifiedTopology: true });
+
+        const queryData = new URLSearchParams(req.url.split('?')[1]);
+        // assign information from form to variables
+        const inputType = queryData.get('searchType');
+        const searchTerm = queryData.get('searchTerm');
+
+         // connect to database
+        client.connect().then(() => {
+            const database = client.db('Stock');
+            const collection = database.collection('PublicCompanies');
+            const query = inputType === "name" ? { "name": searchTerm } : {"ticker": searchTerm };
+            return collection.find(query).toArray();
+        }).then(docs => {
+          // Display results in this style depending on if there
+          // is a match in database or not
+            res.writeHead(200, {'Content-Type': 'text/html'});
+            res.write("<style>");
+            res.write("body {text-align: left; font-family: Arial, sans-serif;}")
+            res.write("h1 { color: #9181d4; }");
+            res.write("div { margin-bottom: 10px; text-align: center;  max-width: 400px; margin 40px auto;}");
+            res.write("p { color: #c28fdb; }");
+            res.write("</style>");
+            res.write("<h1>Search Results</h1>");
+            if (docs.length === 0) {
+                res.write("<p>No results found.</p>");
+            } else {
+                docs.forEach(function(doc) {
+                    let companyName = 'N/A';
+                    let ticker = 'N/A';
+                    let price = 'N/A';
+                    if (doc.name) {
+                        companyName = doc.name;
+                    }
+                    if (doc.ticker) {
+                        ticker = doc.ticker;
+                    }
+                    if (doc.price) {
+                        price = doc.price;
+                    }
+                    res.write("<div style='background-color: #f0f0f0; padding: 10px;'>");
+                    res.write(`<p>Company: ${companyName}, Ticker: ${ticker}, Price: ${price}</p>`);
+                    res.write("</div>");
+                });
+            }
+            res.end();
+        // Error statements if connection fails
+        }).catch(err => {
+            console.error("Database query error:", err);
+            res.writeHead(500, {'Content-Type': 'text/plain'});
+            res.end("Database query error.");
+        }).finally(() => {
+            client.close();
+        }); 
+    } else {
+        res.writeHead(404, {'Content-Type': 'text/plain'});
+        res.end("Not Found");
+    }
+}).listen(port, () => {
+    console.log(`Server running on port ${port}`);
 });
- 
-//function to escape special characters in the search term
-function escape(text) {
-       return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
-}
- 
- 
