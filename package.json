@@ -1,18 +1,19 @@
 {
-  "dependencies": {
-    "jsonfile": "^6.1.0",
-    "mongodb": "^6.5.0"
-  },
-  "name": "myapp",
+  "name": "My app",
   "version": "1.0.0",
+  "description": "node app ",
   "main": "myApp.js",
   "scripts": {
-    "start": "node myApp.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
+  "start": "myApp.js"
+},
+  "repository": {
+  "type": "git",
+  "url": ""
+},
   "author": "",
   "license": "ISC",
-  "description": ""
+  "bugs": {
+  "url": ""
+},
+  "homepage": ""
 }
-
