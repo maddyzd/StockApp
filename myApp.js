@@ -7,7 +7,7 @@ const port = process.env.PORT || 3000;
 // Load the html file to display form
 http.createServer(function (req, res) {
     if (req.url === "/") {
-        fs.readFile('front.html', function(err, html) {
+        fs.readFile('form.html', function(err, html) {
             if (err) {
                 console.error("Error reading file:", err);
                 res.writeHead(500, {'Content-Type': 'text/plain'});
