@@ -1,26 +1,23 @@
-<html>
- 
+<!doctype html>
+<html lang="en">
 <head>
-       <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-       <title>Assignment: Stock Ticker</title>
+ <meta charset="UTF-8">
+<title>Stock Ticker</title>
+
 </head>
- 
-<body>
-       <h1>Stock Ticker</h1>
-       <form action="/process" method="get">
-               <label>
-                       <input type="radio" name="searchType" value="symbol" checked> Ticker Symbol
-                       <input type="radio" name="searchType" value="name"> Company Name
-               </label>
-               <br>
-               <label>
-                        Stock: 
-                       <input type="text" name="searchTerm" required>
-               </label>
-               <br>
-               <input type="submit" value="Search">
-       </form>
- 
-</body>
- 
+  <body>
+    <!-- Form contains a search box and a radio button to state whether it is 
+    a symbol or name -->
+    <form action="/process" method="get">
+        <h1>Stock Ticker</h1>
+        <input type="text" name="searchTerm" placeholder="Enter search">
+        <div class="radio-group">
+            <input type="radio" id="symbol" name="searchType" value="symbol" checked>
+            <label for="symbol">Symbol</label>
+            <input type="radio" id="name" name="searchType" value="name">
+            <label for="name">Name</label>
+        </div>
+        <button type="submit">Search</button>
+    </form>
+  </body>
 </html>
